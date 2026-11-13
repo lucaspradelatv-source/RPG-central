@@ -1,0 +1,799 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Turnos RPG</title>
+<style>
+:root {
+  --bg: #071426;
+  --panel: #102746;
+  --panel2: #16365c;
+  --primary: #258cff;
+  --primary2: #54b4ff;
+  --text: #f1f7ff;
+  --muted: #a9bfd8;
+  --secondary: #a9bfd8;
+  --border: rgba(130,190,255,.2);
+  --shadow: 0 15px 45px rgba(0,0,0,.25);
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background:linear-gradient(145deg,var(--bg),#0b1e38 65%,var(--panel));
+  transition:background .25s,color .25s;
+}
+button,input,textarea,select { font:inherit; }
+button { cursor:pointer; }
+button:focus-visible,input:focus-visible,textarea:focus-visible {
+  outline:2px solid var(--primary2);
+  outline-offset:3px;
+}
+.hidden { display:none !important; }
+.app { min-height:100vh; }
+.topbar {
+  height:68px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 22px;
+  background:rgba(5,15,30,.88);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(12px);
+}
+.brand { font-weight:900; letter-spacing:1px; }
+.brand span { color:var(--primary2); }
+.nav { display:flex; align-items:center; gap:8px; }
+.nav button,.small-btn {
+  color:var(--text);
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:10px;
+  padding:10px 13px;
+}
+.nav button:hover,.nav button.active,.small-btn:hover {
+  background:var(--panel2);
+  border-color:var(--border);
+}
+main { width:min(1050px,94%); margin:35px auto 70px; }
+.page { animation:fade .25s ease; }
+@keyframes fade { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+h1 { font-size:clamp(27px,5vw,42px); margin:0 0 10px; }
+h2 { margin-top:0; }
+.subtitle { color:var(--muted); line-height:1.5; }
+.panel {
+  background:linear-gradient(145deg,var(--panel),rgba(12,31,55,.95));
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:24px;
+  box-shadow:var(--shadow);
+}
+.stack { display:flex; flex-direction:column; gap:17px; }
+.field { display:flex; flex-direction:column; gap:8px; }
+.field label,.field-label { color:var(--secondary); font-size:14px; font-weight:700; }
+input,textarea,select {
+  width:100%;
+  background:rgba(2,12,25,.55);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:11px;
+  padding:13px 14px;
+}
+textarea { resize:vertical; min-height:130px; }
+input::placeholder,textarea::placeholder { color:var(--muted); opacity:.7; }
+.primary-btn {
+  border:0;
+  border-radius:13px;
+  padding:15px 20px;
+  background:linear-gradient(110deg,var(--primary),var(--primary2));
+  color:white;
+  font-weight:900;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--primary) 25%,transparent);
+}
+.primary-btn:hover { filter:brightness(1.12); transform:translateY(-1px); }
+.big-start { width:100%; min-height:68px; font-size:21px; letter-spacing:.5px; }
+.secondary-btn {
+  border:1px solid var(--border);
+  border-radius:11px;
+  padding:12px 15px;
+  color:var(--text);
+  background:var(--panel2);
+}
+.danger-btn { background:#8e2635; border-color:#c64c5d; }
+.info-line {
+  padding:16px;
+  border-radius:13px;
+  background:rgba(0,0,0,.15);
+  border:1px solid var(--border);
+}
+.info-value { font-size:clamp(20px,4vw,28px); font-weight:800; margin-top:7px; }
+.muted { color:var(--muted); }
+.home-layout { max-width:650px; margin:0 auto; }
+.home-layout .panel { padding:clamp(20px,4vw,32px); }
+.home-heading { text-align:center; margin-bottom:24px; }
+.home-heading .logo { font-size:13px; color:var(--primary2); letter-spacing:3px; font-weight:900; }
+#sessionPage { width:100%; }
+.session-shell { min-height:calc(100vh - 68px); display:flex; flex-direction:column; }
+.session-top {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  padding:15px 20px;
+  background:rgba(3,13,27,.45);
+  border-bottom:1px solid var(--border);
+}
+.session-stat {
+  min-width:0;
+  padding:10px 12px;
+  border-radius:12px;
+  background:var(--panel);
+  border:1px solid var(--border);
+}
+.session-stat small { color:var(--muted); display:block; margin-bottom:5px; }
+.session-stat strong { display:block; overflow-wrap:anywhere; }
+.location-edit {
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.location-edit button { flex-shrink:0; padding:5px 8px; }
+.session-content {
+  flex:1;
+  width:min(900px,94%);
+  margin:auto;
+  padding:55px 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.turn-label { color:var(--primary2); font-weight:900; letter-spacing:4px; font-size:14px; }
+.player-name {
+  font-size:clamp(42px,9vw,90px);
+  font-weight:1000;
+  margin:22px 0;
+  overflow-wrap:anywhere;
+  animation:playerIn .65s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes playerIn {
+  from { opacity:0; transform:translateY(25px) scale(.92); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+.turn-count { color:var(--muted); margin-bottom:30px; }
+.action-box { width:min(620px,100%); text-align:left; }
+.action-box textarea { min-height:95px; }
+.action-buttons { display:flex; gap:10px; margin-top:10px; }
+.action-buttons button { flex:1; }
+.session-bottom { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; padding:20px; }
+.history { width:min(620px,100%); text-align:left; margin-top:28px; }
+.history h3 { color:var(--muted); }
+.history-item {
+  padding:12px 14px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin-bottom:8px;
+  overflow-wrap:anywhere;
+}
+.history-item strong { color:var(--primary2); display:block; margin-bottom:5px; }
+.notebook {
+  max-width:780px;
+  margin:0 auto;
+  perspective:1200px;
+}
+.notebook-cover {
+  background:#62452d;
+  border:8px solid #3c291d;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.notebook-title {
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:25px;
+  padding:14px;
+  color:#f7e6c5;
+  border-bottom:1px solid rgba(255,255,255,.25);
+}
+.book-pages {
+  background:#e8d9b7;
+  color:#342b20;
+  min-height:390px;
+  border-radius:5px;
+  padding:22px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  box-shadow:inset 0 0 20px rgba(60,35,10,.15);
+}
+.book-page {
+  min-width:0;
+  padding:10px;
+  background:rgba(255,255,255,.18);
+  border-right:1px solid rgba(80,60,30,.2);
+}
+.book-page label { font-family:Georgia,serif; font-weight:bold; display:block; margin-bottom:10px; }
+.book-page textarea {
+  color:#342b20;
+  background:transparent;
+  border:0;
+  border-top:1px solid rgba(80,60,30,.2);
+  border-radius:0;
+  min-height:260px;
+  padding:10px 2px;
+  line-height:1.8;
+  background-image:repeating-linear-gradient(transparent 0 29px,rgba(80,60,30,.18) 30px);
+}
+.book-controls { display:flex; justify-content:space-between; gap:10px; margin-top:15px; }
+.book-controls button { flex:1; }
+.page-turn { animation:turnPage .4s ease; }
+@keyframes turnPage { 0%{transform:rotateY(0);opacity:1} 50%{transform:rotateY(-12deg);opacity:.5} 100%{transform:rotateY(0);opacity:1} }
+.settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.theme-options { display:flex; gap:10px; flex-wrap:wrap; }
+.theme-choice {
+  border:2px solid transparent;
+  border-radius:12px;
+  padding:12px 17px;
+  color:white;
+  font-weight:bold;
+}
+.theme-choice.selected { border-color:white; outline:2px solid var(--primary2); }
+.theme-blue { background:linear-gradient(120deg,#1262c5,#39a8ff); }
+.theme-red { background:linear-gradient(120deg,#861d2b,#ed5260); }
+.theme-green { background:linear-gradient(120deg,#17653b,#42b878); }
+.color-options { display:flex; gap:8px; flex-wrap:wrap; }
+.color-choice { border:1px solid var(--border); padding:9px 12px; border-radius:9px; color:var(--text); background:var(--panel2); }
+input[type=range] { padding:0; accent-color:var(--primary); }
+.volume-line { display:flex; align-items:center; gap:14px; }
+.volume-line input { flex:1; }
+.empty { color:var(--muted); padding:15px; text-align:center; }
+@media(max-width:700px) {
+  .topbar { height:auto; min-height:65px; padding:12px; flex-wrap:wrap; }
+  .nav { width:100%; overflow-x:auto; }
+  .nav button { white-space:nowrap; padding:9px 11px; }
+  main { margin-top:22px; }
+  .session-top { grid-template-columns:1fr 1fr; padding:10px; }
+  .session-content { padding:38px 0; }
+  .settings-grid { grid-template-columns:1fr; }
+  .book-pages { grid-template-columns:1fr; }
+  .book-page textarea { min-height:160px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">CENTRAL <span>DE RPG</span></div>
+    <nav class="nav" aria-label="Navegação principal">
+      <button class="active" data-page="homePage">Início</button>
+      <button data-page="notesPage">Notas</button>
+      <button data-page="settingsPage">Configurações</button>
+      <button id="navExit" class="hidden">Sair</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TELA INICIAL -->
+    <section id="homePage" class="page">
+      <div class="home-layout">
+        <div class="home-heading">
+          <div class="logo">SISTEMA DE MESTRAGEM</div>
+          <h1>Preparar sessão</h1>
+          <p class="subtitle">Organize os jogadores, o horário e o cenário antes de começar.</p>
+        </div>
+        <div class="panel stack">
+          <div class="info-line">
+            <div class="field-label">HORÁRIO DO RPG</div>
+            <div class="info-value" id="homeClock">08:00</div>
+            <div class="muted">Horário dentro do mundo do RPG</div>
+          </div>
+          <div class="info-line">
+            <div class="field-label">TEMPO DE SESSÃO</div>
+            <div class="info-value" id="homeDuration">00:00:00</div>
+            <div class="muted">Tempo real desde o início</div>
+          </div>
+          <div class="field">
+            <label for="playersInput">JOGADORES (um nome por linha)</label>
+            <textarea id="playersInput" placeholder="Lucas&#10;Rafael&#10;Mariana"></textarea>
+          </div>
+          <div class="field">
+            <label for="startLocation">LOCALIZAÇÃO ATUAL</label>
+            <input id="startLocation" value="Acampamento de Blood Mist" placeholder="Digite o local">
+          </div>
+          <button class="primary-btn big-start" id="startButton">INICIAR RPG</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA DA SESSÃO -->
+    <section id="sessionPage" class="page hidden">
+      <div class="session-shell">
+        <div class="session-top">
+          <div class="session-stat">
+            <small>HORÁRIO DO RPG</small>
+            <strong id="sessionClock">08:00</strong>
+          </div>
+          <div class="session-stat">
+            <small>PRÓXIMO ALARME</small>
+            <strong id="nextAlarm">14:00</strong>
+          </div>
+          <div class="session-stat">
+            <small>LOCALIZAÇÃO</small>
+            <div class="location-edit">
+              <strong id="sessionLocation">Acampamento</strong>
+              <button class="small-btn" id="editLocation" title="Editar localização">✎</button>
+            </div>
+          </div>
+          <div class="session-stat">
+            <small>TEMPO DE SESSÃO</small>
+            <strong id="sessionDuration">00:00:00</strong>
+          </div>
+        </div>
+
+        <div class="session-content">
+          <div class="turn-label">JOGADOR DA VEZ</div>
+          <div class="player-name" id="currentPlayer">Jogador</div>
+          <div class="turn-count" id="turnCount">Turno 1</div>
+
+          <div class="action-box">
+            <label class="field-label" for="actionInput">AÇÃO DO JOGADOR</label>
+            <textarea id="actionInput" placeholder="O que o jogador fez?"></textarea>
+            <div class="action-buttons">
+              <button class="secondary-btn" id="confirmAction">Confirmar ação</button>
+              <button class="primary-btn" id="nextTurn">Próximo turno →</button>
+            </div>
+          </div>
+
+          <div class="history">
+            <h3>Histórico de ações</h3>
+            <div id="historyList"><div class="empty">As ações aparecerão aqui.</div></div>
+          </div>
+        </div>
+        <div class="session-bottom">
+          <button class="secondary-btn" id="pauseClock">Pausar relógio</button>
+          <button class="secondary-btn" id="soundButton">🔊 Som ligado</button>
+          <button class="secondary-btn danger-btn" id="sessionExit">Sair da sessão</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTAS -->
+    <section id="notesPage" class="page hidden">
+      <div class="notebook">
+        <div class="notebook-cover">
+          <div class="notebook-title">📖 Caderno do Mestre</div>
+          <div class="book-pages" id="bookPages">
+            <div class="book-page">
+              <label id="leftPageTitle">Página 1</label>
+              <textarea id="leftNotes" placeholder="Escreva suas anotações..."></textarea>
+            </div>
+            <div class="book-page">
+              <label id="rightPageTitle">Página 2</label>
+              <textarea id="rightNotes" placeholder="Continue suas anotações..."></textarea>
+            </div>
+          </div>
+          <div class="book-controls">
+            <button class="secondary-btn" id="previousPages">← Anterior</button>
+            <button class="secondary-btn" id="nextPages">Próximas →</button>
+          </div>
+          <p style="text-align:center;color:#f7e6c5;font-size:12px;margin:14px 0 0">Caderno de anotações da sessão</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section id="settingsPage" class="page hidden">
+      <div class="panel stack">
+        <div>
+          <h1>Configurações</h1>
+          <p class="subtitle">Personalize a aparência e o som da sua Central de RPG.</p>
+        </div>
+
+        <div class="field">
+          <label>TEMA PRINCIPAL</label>
+          <div class="theme-options">
+            <button class="theme-choice theme-blue selected" data-theme="blue">Azul</button>
+            <button class="theme-choice theme-red" data-theme="red">Vermelho</button>
+            <button class="theme-choice theme-green" data-theme="green">Verde</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>COR SECUNDÁRIA DO TEXTO</label>
+          <div class="color-options">
+            <button class="color-choice" data-textcolor="#111111">Preto</button>
+            <button class="color-choice" data-textcolor="#8fc8ff">Azul</button>
+            <button class="color-choice" data-textcolor="#b68a5b">Marrom</button>
+            <button class="color-choice" data-textcolor="#f18ac0">Rosa</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="volume">VOLUME DA SIRENE</label>
+          <div class="volume-line">
+            <span>🔈</span>
+            <input type="range" id="volume" min="0" max="100" value="35">
+            <strong id="volumeValue">35%</strong>
+          </div>
+          <p class="muted">O volume controla o som do alarme dentro da sessão.</p>
+        </div>
+
+        <div class="field">
+          <label>HORÁRIO INICIAL DO RPG</label>
+          <input type="time" id="initialTime" value="08:00">
+          <button class="secondary-btn" id="saveInitialTime">Salvar horário inicial</button>
+        </div>
+
+        <div class="field">
+          <label>ALARME</label>
+          <p class="muted">O alarme toca a cada 6 horas dentro do RPG (equivalente a 1 hora real), quando a localização for o Acampamento de Blood Mist.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ALERTA DE ALARME -->
+<div id="alarmOverlay" class="hidden" style="
+ position:fixed;inset:0;z-index:100;background:#0876d5;
+ display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#062b52;border:2px solid #64bdff;border-radius:20px;padding:35px;text-align:center;width:min(430px,100%);box-shadow:0 20px 70px #00152d;">
+    <div style="font-size:48px;margin-bottom:12px">🔔</div>
+    <h1 style="color:white">ALARME!</h1>
+    <p style="color:#cce7ff">Seis horas se passaram no RPG.</p>
+    <button class="primary-btn big-start" id="dismissAlarm">DESATIVAR ALARME</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let players = [];
+let currentIndex = 0;
+let turnNumber = 1;
+let gameMinutes = 8 * 60;
+let initialGameMinutes = 8 * 60;
+let sessionSeconds = 0;
+let lastTick = Date.now();
+let clockRunning = false;
+let sessionStarted = false;
+let alarmEnabled = true;
+let alarmSoundEnabled = true;
+let alarmIntervalMinutes = 360;
+let nextAlarmAt = 0;
+let alarmAudio = null;
+let alarmOscillator = null;
+let alarmGain = null;
+let bookPage = 0;
+let notes = {};
+let history = [];
+
+const themes = {
+  blue: {
+    bg:"#071426", panel:"#102746", panel2:"#16365c",
+    primary:"#258cff", primary2:"#54b4ff"
+  },
+  red: {
+    bg:"#260a12", panel:"#481722", panel2:"#682331",
+    primary:"#d52e48", primary2:"#ff7182"
+  },
+  green: {
+    bg:"#071d13", panel:"#123b27", panel2:"#1b5738",
+    primary:"#249b5a", primary2:"#5bd58b"
+  }
+};
+
+function showPage(pageId) {
+  if (sessionStarted && pageId === "homePage") {
+    exitSession();
+    return;
+  }
+  document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+  $(pageId).classList.remove("hidden");
+  document.querySelectorAll(".nav button[data-page]").forEach(b => {
+    b.classList.toggle("active", b.dataset.page === pageId);
+  });
+  updateNav();
+}
+
+function updateNav() {
+  $("navExit").classList.toggle("hidden", !sessionStarted);
+}
+
+document.querySelectorAll(".nav button[data-page]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+$("navExit").addEventListener("click", exitSession);
+
+function formatTime(totalMinutes) {
+  const mins = ((Math.floor(totalMinutes) % 1440) + 1440) % 1440;
+  return String(Math.floor(mins / 60)).padStart(2,"0") + ":" +
+         String(mins % 60).padStart(2,"0");
+}
+function formatDuration(seconds) {
+  const s = Math.floor(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return [h,m,sec].map(v => String(v).padStart(2,"0")).join(":");
+}
+function currentLocation() {
+  return $("startLocation").value.trim() || "Local desconhecido";
+}
+function isAlarmLocation() {
+  return /acampamento.*blood\s*mist/i.test(currentLocation());
+}
+function updateClockDisplay() {
+  $("homeClock").textContent = formatTime(gameMinutes);
+  $("sessionClock").textContent = formatTime(gameMinutes);
+  $("homeDuration").textContent = formatDuration(sessionSeconds);
+  $("sessionDuration").textContent = formatDuration(sessionSeconds);
+  $("sessionLocation").textContent = currentLocation();
+  if (nextAlarmAt) {
+    $("nextAlarm").textContent = formatTime(nextAlarmAt);
+  } else {
+    $("nextAlarm").textContent = "Desativado";
+  }
+}
+
+function updatePlayerDisplay() {
+  if (!players.length) {
+    $("currentPlayer").textContent = "Sem jogadores";
+    $("turnCount").textContent = "Adicione jogadores na tela inicial.";
+    $("nextTurn").disabled = true;
+    return;
+  }
+  $("nextTurn").disabled = false;
+  $("currentPlayer").textContent = players[currentIndex];
+  $("turnCount").textContent = "Turno " + turnNumber + " • Jogador " +
+    (currentIndex + 1) + " de " + players.length;
+  $("currentPlayer").style.animation = "none";
+  void $("currentPlayer").offsetWidth;
+  $("currentPlayer").style.animation = "";
+}
+
+function startSession() {
+  players = $("playersInput").value.split("\n").map(p => p.trim()).filter(Boolean);
+  if (!players.length) {
+    alert("Adicione pelo menos um jogador antes de iniciar.");
+    $("playersInput").focus();
+    return;
+  }
+  currentIndex = 0;
+  turnNumber = 1;
+  history = [];
+  $("historyList").innerHTML = '<div class="empty">As ações aparecerão aqui.</div>';
+  $("actionInput").value = "";
+  sessionSeconds = 0;
+  const timeParts = $("initialTime").value.split(":").map(Number);
+  initialGameMinutes = (timeParts[0] || 0) * 60 + (timeParts[1] || 0);
+  gameMinutes = initialGameMinutes;
+  nextAlarmAt = gameMinutes + alarmIntervalMinutes;
+  sessionStarted = true;
+  clockRunning = true;
+  lastTick = Date.now();
+  $("startLocation").value = currentLocation();
+  $("homePage").classList.add("hidden");
+  $("sessionPage").classList.remove("hidden");
+  updateNav();
+  updatePlayerDisplay();
+  updateClockDisplay();
+}
+
+$("startButton").addEventListener("click", startSession);
+
+function exitSession() {
+  stopAlarm();
+  sessionStarted = false;
+  clockRunning = false;
+  $("sessionPage").classList.add("hidden");
+  $("homePage").classList.remove("hidden");
+  document.querySelectorAll(".nav button[data-page]").forEach(b => {
+    b.classList.toggle("active", b.dataset.page === "homePage");
+  });
+  updateNav();
+  updateClockDisplay();
+}
+
+$("sessionExit").addEventListener("click", exitSession);
+
+function nextPlayer() {
+  if (!players.length) return;
+  currentIndex++;
+  if (currentIndex >= players.length) {
+    currentIndex = 0;
+    turnNumber++;
+  }
+  updatePlayerDisplay();
+}
+$("nextTurn").addEventListener("click", nextPlayer);
+
+function addAction() {
+  const action = $("actionInput").value.trim();
+  if (!action || !players.length) return;
+  history.unshift({player:players[currentIndex], action, turn:turnNumber});
+  const item = document.createElement("div");
+  item.className = "history-item";
+  const title = document.createElement("strong");
+  title.textContent = history[0].player + " • Turno " + turnNumber;
+  const body = document.createElement("div");
+  body.textContent = action;
+  item.append(title, body);
+  if ($("historyList").querySelector(".empty")) $("historyList").innerHTML = "";
+  $("historyList").prepend(item);
+  $("actionInput").value = "";
+}
+$("confirmAction").addEventListener("click", addAction);
+$("actionInput").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    addAction();
+  }
+});
+
+$("editLocation").addEventListener("click", () => {
+  const newLocation = prompt("Digite a localização atual:", currentLocation());
+  if (newLocation !== null && newLocation.trim()) {
+    $("startLocation").value = newLocation.trim();
+    updateClockDisplay();
+    if (!isAlarmLocation()) {
+      nextAlarmAt = 0;
+    } else if (!nextAlarmAt) {
+      nextAlarmAt = gameMinutes + alarmIntervalMinutes;
+    }
+  }
+});
+
+$("pauseClock").addEventListener("click", () => {
+  clockRunning = !clockRunning;
+  lastTick = Date.now();
+  $("pauseClock").textContent = clockRunning ? "Pausar relógio" : "Continuar relógio";
+});
+
+function tick() {
+  const now = Date.now();
+  const deltaSeconds = (now - lastTick) / 1000;
+  lastTick = now;
+
+  if (sessionStarted && clockRunning) {
+    sessionSeconds += deltaSeconds;
+    // 10 minutos reais = 60 minutos no RPG.
+    gameMinutes += deltaSeconds / 10;
+
+    if (alarmEnabled && isAlarmLocation() && nextAlarmAt > 0 &&
+        gameMinutes >= nextAlarmAt) {
+      nextAlarmAt += alarmIntervalMinutes;
+      triggerAlarm();
+    }
+    updateClockDisplay();
+  }
+}
+setInterval(tick, 250);
+
+function triggerAlarm() {
+  $("alarmOverlay").classList.remove("hidden");
+  if (alarmSoundEnabled) startAlarmSound();
+}
+function startAlarmSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    stopAlarmSound();
+    alarmAudio = new AudioContext();
+    alarmOscillator = alarmAudio.createOscillator();
+    alarmGain = alarmAudio.createGain();
+    alarmOscillator.type = "sawtooth";
+    alarmOscillator.frequency.value = 720;
+    alarmGain.gain.value = Number($("volume").value) / 100 * 0.18;
+    alarmOscillator.connect(alarmGain);
+    alarmGain.connect(alarmAudio.destination);
+    alarmOscillator.start();
+    let high = true;
+    const pulse = () => {
+      if (!alarmOscillator || !alarmAudio) return;
+      alarmOscillator.frequency.setTargetAtTime(high ? 920 : 620, alarmAudio.currentTime, .08);
+      high = !high;
+    };
+    alarmOscillator._pulse = setInterval(pulse, 450);
+  } catch (e) {}
+}
+function stopAlarmSound() {
+  if (alarmOscillator) {
+    if (alarmOscillator._pulse) clearInterval(alarmOscillator._pulse);
+    try { alarmOscillator.stop(); } catch(e) {}
+    alarmOscillator = null;
+  }
+  if (alarmAudio) {
+    try { alarmAudio.close(); } catch(e) {}
+    alarmAudio = null;
+  }
+}
+function stopAlarm() {
+  $("alarmOverlay").classList.add("hidden");
+  stopAlarmSound();
+}
+$("dismissAlarm").addEventListener("click", stopAlarm);
+
+$("soundButton").addEventListener("click", () => {
+  alarmSoundEnabled = !alarmSoundEnabled;
+  $("soundButton").textContent = alarmSoundEnabled ? "🔊 Som ligado" : "🔇 Som desligado";
+  if (!alarmSoundEnabled) stopAlarmSound();
+});
+
+$("volume").addEventListener("input", () => {
+  $("volumeValue").textContent = $("volume").value + "%";
+  if (alarmGain && alarmAudio) {
+    alarmGain.gain.setTargetAtTime(Number($("volume").value) / 100 * .18, alarmAudio.currentTime, .05);
+  }
+});
+
+function applyTheme(name) {
+  const theme = themes[name] || themes.blue;
+  const root = document.documentElement;
+  root.style.setProperty("--bg", theme.bg);
+  root.style.setProperty("--panel", theme.panel);
+  root.style.setProperty("--panel2", theme.panel2);
+  root.style.setProperty("--primary", theme.primary);
+  root.style.setProperty("--primary2", theme.primary2);
+  document.querySelectorAll(".theme-choice").forEach(button => {
+    button.classList.toggle("selected", button.dataset.theme === name);
+  });
+}
+document.querySelectorAll(".theme-choice").forEach(button => {
+  button.addEventListener("click", () => applyTheme(button.dataset.theme));
+});
+document.querySelectorAll(".color-choice").forEach(button => {
+  button.addEventListener("click", () => {
+    document.documentElement.style.setProperty("--secondary", button.dataset.textcolor);
+  });
+});
+
+$("saveInitialTime").addEventListener("click", () => {
+  const parts = $("initialTime").value.split(":").map(Number);
+  initialGameMinutes = (parts[0] || 0) * 60 + (parts[1] || 0);
+  if (!sessionStarted) gameMinutes = initialGameMinutes;
+  updateClockDisplay();
+  alert("Horário inicial salvo!");
+});
+
+// CADERNO: duas páginas por vez, com animação ao virar.
+function saveCurrentPages() {
+  notes[bookPage] = $("leftNotes").value;
+  notes[bookPage + 1] = $("rightNotes").value;
+}
+function loadPages() {
+  $("leftPageTitle").textContent = "Página " + (bookPage + 1);
+  $("rightPageTitle").textContent = "Página " + (bookPage + 2);
+  $("leftNotes").value = notes[bookPage] || "";
+  $("rightNotes").value = notes[bookPage + 1] || "";
+}
+$("leftNotes").addEventListener("input", saveCurrentPages);
+$("rightNotes").addEventListener("input", saveCurrentPages);
+function turnPages(direction) {
+  saveCurrentPages();
+  bookPage = Math.max(0, bookPage + direction * 2);
+  $("bookPages").classList.remove("page-turn");
+  void $("bookPages").offsetWidth;
+  $("bookPages").classList.add("page-turn");
+  loadPages();
+}
+$("nextPages").addEventListener("click", () => turnPages(1));
+$("previousPages").addEventListener("click", () => turnPages(-1));
+
+updateClockDisplay();
+loadPages();
+updateNav();
+</script>
+</body>
+</html>
